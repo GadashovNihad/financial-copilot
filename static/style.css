@@ -1,0 +1,163 @@
+/* General Body Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Main Chat Container */
+#chat-container {
+    width: 90%;
+    max-width: 800px;
+    height: 95vh;
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header Styles */
+.header {
+    background-color: #333;
+    padding: 15px 20px;
+    border-bottom: 1px solid #444;
+    text-align: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* Token Input Area */
+#token-container {
+    padding: 15px;
+    background-color: #2a2a2a;
+    display: flex;
+    gap: 10px;
+    border-bottom: 1px solid #444;
+}
+
+#jwt-token {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #e0e0e0;
+    font-size: 0.9em;
+}
+
+#token-submit {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    background-color: #4CAF50; /* Green */
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#token-submit:hover {
+    background-color: #45a049;
+}
+
+/* Chat Messages Area */
+#chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Individual Message Bubble Styles */
+.message {
+    padding: 12px 18px;
+    border-radius: 18px;
+    max-width: 70%;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background-color: #005A9C; /* Blue */
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.bot-message {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+.error-message {
+    background-color: #D32F2F; /* Red */
+    color: white;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    font-weight: 500;
+}
+
+/* Input Form Area */
+#chat-form {
+    padding: 15px;
+    background-color: #2a2a2a;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid #444;
+}
+
+#user-input {
+    flex-grow: 1;
+    padding: 12px;
+    border-radius: 20px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #e0e0e0;
+    font-size: 1em;
+}
+
+#chat-form button {
+    padding: 12px 25px;
+    border-radius: 20px;
+    border: none;
+    background-color: #007BFF; /* Bright Blue */
+    color: white;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s;
+}
+
+#chat-form button:hover {
+    background-color: #0056b3;
+}
+
+/* Scrollbar styling for a modern look */
+#chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chat-messages::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+#chat-messages::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 10px;
+    border: 2px solid #1e1e1e;
+}

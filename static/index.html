@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Co-pilot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0f0f12;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Smartphone container */
+        #phone-container {
+            width: 400px;
+            height: 800px;
+            background: #1a1a1d;
+            border-radius: 30px;
+            border: 3px solid #333;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 157, 0.3),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Chat container inside the phone */
+        #chat-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        /* Header */
+        #chat-header {
+            color: #00ff9d;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ff9d;
+            border-bottom: 2px solid #00ff9d;
+            padding-bottom: 10px;
+        }
+
+        /* JWT input area */
+        #jwt-input-area {
+            margin-bottom: 20px;
+        }
+
+        #jwt-token {
+            width: 100%;
+            padding: 12px;
+            background: #2f2f33;
+            border: 2px solid #ff006e;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #jwt-token:focus {
+            border-color: #00ff9d;
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+        }
+
+        #jwt-token::placeholder {
+            color: #888;
+        }
+
+        /* Chat window */
+        #chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+
+        /* Custom scrollbar */
+        #chat-window::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #chat-window::-webkit-scrollbar-track {
+            background: #1a1a1d;
+        }
+
+        #chat-window::-webkit-scrollbar-thumb {
+            background: #00ff9d;
+            border-radius: 3px;
+        }
+
+        /* Message styles */
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            color: #fff;
+            margin-left: auto;
+            text-align: right;
+            box-shadow: 0 0 15px rgba(255, 0, 110, 0.4);
+        }
+
+        .bot-message {
+            background: #2f2f33;
+            color: #00ff9d;
+            margin-right: auto;
+            text-align: left;
+            border: 1px solid #00ff9d;
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+        }
+
+        /* Chat input area */
+        #chat-input-area {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: #2f2f33;
+            border: 2px solid #00ff9d;
+            border-radius: 25px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #chat-input:focus {
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
+            border-color: #ff006e;
+        }
+
+        #chat-input::placeholder {
+            color: #888;
+        }
+
+        #send-button {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #00ff9d, #00d4aa);
+            border: none;
+            border-radius: 50%;
+            color: #000;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
+        }
+
+        #send-button:hover {
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 0, 110, 0.6);
+            transform: scale(1.05);
+        }
+
+        #send-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Neon glow effects */
+        @keyframes neon-pulse {
+            0%, 100% {
+                text-shadow: 0 0 5px #00ff9d, 0 0 10px #00ff9d, 0 0 15px #00ff9d;
+            }
+            50% {
+                text-shadow: 0 0 10px #00ff9d, 0 0 20px #00ff9d, 0 0 30px #00ff9d;
+            }
+        }
+
+        #chat-header {
+            animation: neon-pulse 2s infinite;
+        }
+
+        /* Phone bezel details */
+        #phone-container::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+        }
+
+        #phone-container::after {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            background: #222;
+            border-radius: 50%;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            #phone-container {
+                width: 90vw;
+                height: 90vh;
+                border-radius: 20px;
+            }
+            
+            #chat-container {
+                padding: 15px;
+            }
+            
+            #chat-header {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="phone-container">
+        <div id="chat-container">
+            <div id="chat-header">Financial Co-pilot</div>
+            <div id="jwt-input-area">
+                <input type="text" id="jwt-token" placeholder="Paste JWT Token from Bank of Anthos here">
+            </div>
+            <div id="chat-window">
+                <div class="message bot-message">Hello! First, paste your JWT token above, then ask a question.</div>
+            </div>
+            <div id="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Ask a question...">
+                <button id="send-button">→</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const jwtTokenInput = document.getElementById('jwt-token');
+    
+        // Bu funksiya dəyişməyib
+        function addMessage(text, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+            messageElement.textContent = text;
+            chatWindow.appendChild(messageElement);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    
+        // Bu funksiya da dəyişməyib
+        async function sendMessage() {
+            const messageText = chatInput.value.trim();
+            const jwtToken = jwtTokenInput.value.trim();
+    
+            if (messageText === '') return;
+            if (jwtToken === '') {
+                addMessage('Please paste your JWT token in the box above first.', 'bot');
+                return;
+            }
+    
+            addMessage(messageText, 'user');
+            chatInput.value = '';
+            addMessage('...', 'bot');
+    
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({ message: messageText })
+                });
+    
+                const data = await response.json();
+                const lastBotMessage = chatWindow.querySelector('.bot-message:last-child');
+                lastBotMessage.textContent = data.reply || data.error;
+    
+            } catch (error) {
+                const lastBotMessage = chatWindow.querySelector('.bot-message:last-child');
+                lastBotMessage.textContent = 'Sorry, I encountered an error.';
+                console.error('Error:', error);
+            }
+        }
+        
+        // --- YENİ FUNKSİYA BURADADIR ---
+        async function fetchProactiveTip() {
+            const jwtToken = jwtTokenInput.value.trim();
+            // Yalnız token daxil edildikdən sonra məsləhət istə
+            if (jwtToken === '') return;
+    
+            try {
+                const response = await fetch('/api/proactive_tip', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+                const data = await response.json();
+                if (data.tip) {
+                    addMessage(data.tip, 'bot');
+                }
+            } catch (error) {
+                console.error('Error fetching proactive tip:', error);
+            }
+        }
+    
+        sendButton.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    
+        // Token xanasının dəyəri dəyişəndə proaktiv məsləhət funksiyasını çağır
+        jwtTokenInput.addEventListener('paste', () => {
+            // Paste hadisəsi dərhal baş verdiyi üçün, dəyərin tam yerləşməsi üçün kiçik bir fasilə veririk
+            setTimeout(fetchProactiveTip, 100);
+        });
+    
+    </script>
+</body>
+</html>
