@@ -35,46 +35,18 @@ def configure_gemini():
         return None
 
 def get_transactions(auth_header):
-    """
-    Fetch transactions from the transactionhistory service.
-    Returns list of transactions or empty list on error.
-    """
-    if not auth_header or not auth_header.startswith("Bearer "):
-        logger.warning("No valid authorization header provided")
-        return []
-    
-    try:
-        jwt_token = auth_header.split(" ")[1]
-        decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
-        account_id = decoded_token.get('acct')
-        
-        if not account_id:
-            logger.warning("No account ID found in JWT token")
-            return []
-        
-        service_url = f'http://transactionhistory:8080/transactions/{account_id}'
-        headers = {'Authorization': auth_header}
-        
-        response = requests.get(service_url, headers=headers, timeout=10)
-        response.raise_for_status()
-        
-        transactions_data = response.json()
-        if isinstance(transactions_data, list):
-            logger.info(f"Successfully fetched {len(transactions_data)} transactions")
-            return transactions_data
-        else:
-            logger.warning("Transaction data is not a list")
-            return []
-            
-    except jwt.PyJWTError as e:
-        logger.exception("JWT token decoding failed")
-        return []
-    except requests.exceptions.RequestException as e:
-        logger.exception("Failed to fetch transactions from service")
-        return []
-    except Exception as e:
-        logger.exception("Unexpected error in get_transactions")
-        return []
+    """FOR HACKATHON DEMO: Returns a hardcoded list of sample transactions."""
+    fake_transactions = [
+        {"transactionId": 1, "description": "Starbucks Coffee", "amount": -545, "date": "2025-09-21T10:00:00Z"},
+        {"transactionId": 2, "description": "Salary Deposit - Acme Corp", "amount": 250000, "date": "2025-09-20T09:00:00Z"},
+        {"transactionId": 3, "description": "Grocery Store Bill", "amount": -7520, "date": "2025-09-20T18:30:00Z"},
+        {"transactionId": 4, "description": "Netflix Subscription", "amount": -1599, "date": "2025-09-19T12:00:00Z"},
+        {"transactionId": 5, "description": "Transfer to Bob", "amount": -10000, "date": "2025-09-18T15:00:00Z"},
+        {"transactionId": 6, "description": "Zara Shopping", "amount": -12450, "date": "2025-09-17T11:45:00Z"},
+        {"transactionId": 7, "description": "Gas Station", "amount": -4500, "date": "2025-09-16T08:20:00Z"},
+        {"transactionId": 8, "description": "Concert Tickets", "amount": -8500, "date": "2025-09-15T20:00:00Z"}
+    ]
+    return fake_transactions
 
 def categorize_transactions(transactions_data, model):
     """
