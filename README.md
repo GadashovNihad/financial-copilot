@@ -1,24 +1,27 @@
-# Financial Co-pilot
+Financial Co-pilot
+Elevator Pitch: Stop analyzing statements. Start talking to your money.
 
-**Elevator Pitch:** Stop analyzing statements. Start talking to your money.
+🚀 About The Project
+Financial Co-pilot is an intelligent, conversational AI assistant developed for a banking hackathon. It empowers users to securely connect to their transaction history and ask complex questions in natural language. Our core mission was to transform tedious financial analysis into a simple, engaging conversation.
 
-## 🚀 About The Project
+The entire application is engineered on a modern, cloud-native stack. We leveraged the power of Google's Gemini AI for its conversational intelligence, built a robust backend with Python and Flask, and containerized it with Docker. The application is deployed and managed on the Google Kubernetes Engine (GKE), ensuring scalability and reliability.
 
-Financial Co-pilot is an intelligent chatbot assistant built for a banking hackathon. It allows users to connect to their bank transaction history and ask complex questions in natural language. The application leverages the power of Google's Gemini AI to provide insightful answers, automatic transaction categorization, and helps users manage their financial goals and budgets through a simple, conversational interface.
+🛠️ Built With
+Backend: Python, Flask
 
-The entire application is built on a modern, cloud-native stack, containerized with Docker, and deployed on the Google Kubernetes Engine (GKE).
+AI: Google Gemini API
 
-### Built With
+Frontend: HTML, CSS, JavaScript
 
-* **Backend:** Python, Flask
-* **AI:** Google Gemini API
-* **Frontend:** HTML, CSS, JavaScript
-* **Cloud & DevOps:** Google Kubernetes Engine (GKE), Docker, Git, GitHub, GitHub Codespaces
+Cloud & DevOps: Google Kubernetes Engine (GKE), Docker, Git, GitHub, GitHub Codespaces
 
-## 🎯 Features
+🎯 Features
+Conversational Q&A: Ask questions about your finances in plain English, such as "What were my total expenses last month?"
 
-* **Conversational Q&A:** Ask complex questions about your spending (e.g., "How much did I spend last month?").
-* **Automatic Categorization:** The AI automatically categorizes raw transaction data to provide deeper insights (e.g., "What are my top 3 spending categories?").
-* **Goal Management:** Set savings goals and track your progress.
-* **Budgeting:** Set monthly budgets for different spending categories.
-* **Proactive Tips:** Receive automated tips based on your spending habits.
+AI-Powered Categorization: The AI automatically categorizes raw transaction data, providing insights like "What were my top 3 spending categories?" even if the original data lacks this information.
+
+Goal Management: Easily set savings goals and receive updates on your progress.
+
+Budgeting: Create monthly budgets for specific spending categories.
+
+Proactive Tips: The system analyzes your spending habits to provide helpful and timely advice without being prompted.
