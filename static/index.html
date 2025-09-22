@@ -266,7 +266,7 @@
         const sendButton = document.getElementById('send-button');
         const jwtTokenInput = document.getElementById('jwt-token');
     
-        // Bu funksiya dəyişməyib
+        
         function addMessage(text, sender) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
@@ -275,7 +275,7 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
     
-        // Bu funksiya da dəyişməyib
+        
         async function sendMessage() {
             const messageText = chatInput.value.trim();
             const jwtToken = jwtTokenInput.value.trim();
@@ -311,10 +311,10 @@
             }
         }
         
-        // --- YENİ FUNKSİYA BURADADIR ---
+        
         async function fetchProactiveTip() {
             const jwtToken = jwtTokenInput.value.trim();
-            // Yalnız token daxil edildikdən sonra məsləhət istə
+            
             if (jwtToken === '') return;
     
             try {
@@ -341,9 +341,9 @@
             }
         });
     
-        // Token xanasının dəyəri dəyişəndə proaktiv məsləhət funksiyasını çağır
+        
         jwtTokenInput.addEventListener('paste', () => {
-            // Paste hadisəsi dərhal baş verdiyi üçün, dəyərin tam yerləşməsi üçün kiçik bir fasilə veririk
+            
             setTimeout(fetchProactiveTip, 100);
         });
     
