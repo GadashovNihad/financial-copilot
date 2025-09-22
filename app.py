@@ -250,118 +250,203 @@ def proactive_tip_endpoint():
 @app.route('/api/chat', methods=['POST'])
 def chat_endpoint():
     """
-    Handles all user intents: Q&A, goal setting, and budget management.
+    Main chat endpoint with robust error handling and complete logic.
+    CRITICAL: Every logical path MUST end with a return statement.
     """
-    model = configure_gemini()
-    if not model:
-        return jsonify({"error": "API Key not configured properly"}), 500
-    
-    data = request.get_json()
-    if not data or 'message' not in data:
-        return jsonify({'error': "Invalid request, 'message' is required"}), 400
-    
-    user_message = data['message']
-    user_message_lower = user_message.lower()
-
-    # Step 1: Fetch and Categorize Transactions
-    auth_header = request.headers.get('Authorization')
-    transactions_data = get_transactions(auth_header)
-    transactions_data = categorize_transactions(transactions_data, model)
-    
-    # --- Intent Handling ---
-
-    # Intent 1: Set Goal
-    if any(k in user_message_lower for k in ["set a goal", "i want to save", "save for"]):
-        try:
-            goal_data = extract_goal_from_message(user_message, model)
-            if goal_data:
-                user_goal['name'] = goal_data['name']
-                user_goal['target'] = float(goal_data['target_amount'])
-                user_goal['start_date'] = datetime.now().isoformat()
-                reply_text = f"Okay, I've set a goal for you to save ${user_goal['target']:.2f} for {user_goal['name']}."
-            else:
-                reply_text = "I couldn't understand the goal. Please try again, for example: 'I want to save 500 for a trip'."
-            return jsonify({'reply': reply_text}), 200
-        except Exception as e:
-            logging.exception("Error in goal setting intent")
-            return jsonify({'reply': 'Sorry, I had trouble setting your goal.'}), 500
-
-    # Intent 2: Set Budget
-    elif any(k in user_message_lower for k in ["set a budget", "budget for"]):
-        try:
-            budget_data = extract_budget_from_message(user_message, model)
-            if budget_data:
-                category = budget_data['category'].capitalize()
-                amount = float(budget_data['amount'])
-                user_budgets[category] = amount
-                reply_text = f"Okay, I've set a monthly budget of ${amount:.2f} for the '{category}' category."
-            else:
-                reply_text = "I couldn't understand the budget. Please try again, for example: 'Set a $500 budget for Shopping'."
-            return jsonify({'reply': reply_text}), 200
-        except Exception as e:
-            logging.exception("Error in budget setting intent")
-            return jsonify({'reply': 'Sorry, I had trouble setting your budget.'}), 500
-
-    # Intent 3: Check Budget
-    elif any(k in user_message_lower for k in ["check my budget", "how is my budget"]):
-        try:
-            if not user_budgets:
-                return jsonify({'reply': "You haven't set any budgets yet."}), 200
-
-            asked_category = None
-            for category in user_budgets.keys():
-                if category.lower() in user_message_lower:
-                    asked_category = category
-                    break
-            
-            if not asked_category:
-                return jsonify({'reply': "I couldn't understand which budget you're asking about."}), 200
-            
-            budget_amount = user_budgets[asked_category]
-            total_spent_cents = 0
-            current_month = datetime.now().month
-            current_year = datetime.now().year
-
-            if isinstance(transactions_data, list):
-                for t in transactions_data:
+    try:
+        # Step 1: Initialize Gemini model
+        model = configure_gemini()
+        if not model:
+            return jsonify({"error": "AI service is currently unavailable. Please try again later."}), 500
+        
+        # Step 2: Get user message
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({'error': "Invalid request: missing 'message' field"}), 400
+        
+        user_message = data['message']
+        user_message_lower = user_message.lower()
+        
+        # Step 3: Fetch raw transaction data
+        auth_header = request.headers.get('Authorization')
+        transactions_data = get_transactions(auth_header)
+        
+        # Step 4: IMMEDIATELY categorize transactions
+        transactions_data = categorize_transactions(transactions_data, model)
+        
+        # Step 5: Intent handling with if/elif/else structure
+        
+        # Intent 1: Set Goal
+        if any(keyword in user_message_lower for keyword in ["set a goal", "i want to save", "save for", "goal to save"]):
+            try:
+                goal_data = extract_goal_from_message(user_message, model)
+                if goal_data:
+                    user_goal['name'] = goal_data['name']
+                    user_goal['target'] = float(goal_data['target_amount'])
+                    user_goal['start_date'] = datetime.now().isoformat()
+                    reply_text = f"Perfect! I've set a savings goal of ${user_goal['target']:.2f} for your {user_goal['name']}. I'll help you track your progress!"
+                else:
+                    reply_text = "I couldn't understand your goal. Please try again with something like: 'I want to save $1000 for a vacation'"
+                return jsonify({'reply': reply_text}), 200
+            except Exception as e:
+                logging.exception("Error in set goal intent")
+                return jsonify({'reply': "I'm having trouble setting up your goal right now. Please try again."}), 200
+        
+        # Intent 2: Set Budget
+        elif any(keyword in user_message_lower for keyword in ["set a budget", "my budget is", "budget for"]):
+            try:
+                budget_data = extract_budget_from_message(user_message, model)
+                if budget_data:
+                    category = budget_data['category'].title()
+                    amount = float(budget_data['amount'])
+                    user_budgets[category] = amount
+                    reply_text = f"Great! I've set a monthly budget of ${amount:.2f} for {category}. I'll help you track your spending in this category."
+                else:
+                    reply_text = "I couldn't understand your budget. Please try again with something like: 'Set a $500 budget for Groceries'"
+                return jsonify({'reply': reply_text}), 200
+            except Exception as e:
+                logging.exception("Error in set budget intent")
+                return jsonify({'reply': "I'm having trouble setting up your budget right now. Please try again."}), 200
+        
+        # Intent 3: Check Budget
+        elif any(keyword in user_message_lower for keyword in ["check my budget", "budget status", "how is my budget"]):
+            try:
+                if not user_budgets:
+                    return jsonify({'reply': "You haven't set any budgets yet. Try saying 'Set a $500 budget for Groceries' to get started!"}), 200
+                
+                # Find which category the user is asking about
+                asked_category = None
+                for category in user_budgets.keys():
+                    if category.lower() in user_message_lower:
+                        asked_category = category
+                        break
+                
+                if not asked_category:
+                    categories_list = ", ".join(user_budgets.keys())
+                    return jsonify({'reply': f"Which budget would you like to check? You have budgets for: {categories_list}"}), 200
+                
+                # Calculate spending for this category in current month
+                budget_amount = user_budgets[asked_category]
+                total_spent = 0.0
+                current_month = datetime.now().month
+                current_year = datetime.now().year
+                
+                if isinstance(transactions_data, list):
+                    for transaction in transactions_data:
+                        try:
+                            date_str = transaction.get('date', '')
+                            if date_str:
+                                transaction_date = datetime.fromisoformat(date_str.split('T')[0])
+                                amount = transaction.get('amount', 0)
+                                category = transaction.get('category', '')
+                                
+                                # Only count negative amounts (expenses) in the current month for this category
+                                if (transaction_date.month == current_month and
+                                    transaction_date.year == current_year and
+                                    amount < 0 and
+                                    category == asked_category):
+                                    total_spent += abs(amount) / 100.0  # Convert cents to dollars
+                        except (ValueError, TypeError):
+                            continue
+                
+                remaining_budget = budget_amount - total_spent
+                
+                if total_spent == 0:
+                    reply_text = f"Good news! You haven't spent anything from your {asked_category} budget of ${budget_amount:.2f} this month."
+                elif remaining_budget >= 0:
+                    percentage_used = (total_spent / budget_amount) * 100
+                    reply_text = f"For your {asked_category} budget of ${budget_amount:.2f}, you've spent ${total_spent:.2f} ({percentage_used:.1f}%). You have ${remaining_budget:.2f} remaining this month."
+                else:
+                    overspent = abs(remaining_budget)
+                    reply_text = f"Alert! You've exceeded your {asked_category} budget of ${budget_amount:.2f}. You've spent ${total_spent:.2f}, which is ${overspent:.2f} over budget this month."
+                
+                return jsonify({'reply': reply_text}), 200
+            except Exception as e:
+                logging.exception("Error in check budget intent")
+                return jsonify({'reply': "I'm having trouble checking your budget right now. Please try again."}), 200
+        
+        # Intent 4: Check Goal Progress
+        elif any(keyword in user_message_lower for keyword in ["goal progress", "how am i doing", "my goal", "check goal"]):
+            try:
+                if not user_goal:
+                    return jsonify({'reply': "You haven't set a savings goal yet. Try saying 'I want to save $1000 for a vacation' to get started!"}), 200
+                
+                # Calculate total savings since goal was set
+                total_saved = 0.0
+                goal_start_date = None
+                
+                if 'start_date' in user_goal:
                     try:
-                        transaction_date = datetime.fromisoformat(t['date'].split('T')[0])
-                        if (transaction_date.month == current_month and
-                            transaction_date.year == current_year and
-                            t.get('amount', 0) < 0 and
-                            t.get('category') == asked_category):
-                            total_spent_cents += abs(t.get('amount', 0))
-                    except (ValueError, KeyError):
-                        continue
-            
-            total_spent_dollars = total_spent_cents / 100.0
-            remaining_budget = budget_amount - total_spent_dollars
-            
-            reply_text = (f"For your '{asked_category}' budget of ${budget_amount:.2f}, "
-                          f"you have spent ${total_spent_dollars:.2f} this month. "
-                          f"You have ${remaining_budget:.2f} remaining.")
-            return jsonify({'reply': reply_text}), 200
-        except Exception as e:
-            logging.exception("Error in budget checking intent")
-            return jsonify({'reply': 'Sorry, I had trouble checking your budget.'}), 500
+                        goal_start_date = datetime.fromisoformat(user_goal['start_date'].split('T')[0])
+                    except (ValueError, TypeError):
+                        goal_start_date = None
+                
+                if isinstance(transactions_data, list):
+                    for transaction in transactions_data:
+                        try:
+                            amount = transaction.get('amount', 0)
+                            # Only count positive amounts (deposits/income) as savings
+                            if amount > 0:
+                                if goal_start_date:
+                                    date_str = transaction.get('date', '')
+                                    if date_str:
+                                        transaction_date = datetime.fromisoformat(date_str.split('T')[0])
+                                        if transaction_date >= goal_start_date:
+                                            total_saved += amount / 100.0  # Convert cents to dollars
+                                else:
+                                    total_saved += amount / 100.0
+                        except (ValueError, TypeError):
+                            continue
+                
+                goal_name = user_goal.get('name', 'your goal')
+                target_amount = user_goal.get('target', 0)
+                
+                # Generate progress response
+                if total_saved >= target_amount:
+                    excess = total_saved - target_amount
+                    reply_text = f"🎉 Congratulations! You've exceeded your savings goal! You've saved ${total_saved:.2f} for your {goal_name}, which is ${excess:.2f} more than your ${target_amount:.2f} target. Amazing work!"
+                else:
+                    percentage_complete = (total_saved / target_amount) * 100 if target_amount > 0 else 0
+                    remaining = target_amount - total_saved
+                    reply_text = f"Great progress! You've saved ${total_saved:.2f} of your ${target_amount:.2f} goal for your {goal_name} ({percentage_complete:.1f}% complete). You need ${remaining:.2f} more to reach your goal!"
+                
+                return jsonify({'reply': reply_text}), 200
+            except Exception as e:
+                logging.exception("Error in check goal progress intent")
+                return jsonify({'reply': "I'm having trouble checking your goal progress right now. Please try again."}), 200
+        
+        # Intent 5: General Q&A (default case)
+        else:
+            try:
+                system_instruction = """
+                You are a helpful and friendly financial co-pilot for a bank customer.
+                Provide clear, concise answers based on the transaction data provided.
+                - Give direct answers in the first sentence
+                - Keep responses conversational and helpful
+                - Don't use markdown formatting
+                - If asked about spending patterns, use the categorized transaction data
+                """
+                
+                # Format transaction data for Gemini (limit for performance)
+                if isinstance(transactions_data, list) and transactions_data:
+                    recent_transactions = transactions_data[:30]  # Latest 30 transactions
+                    transaction_summary = f"Recent Transaction Data:\n{json.dumps(recent_transactions, indent=2)}"
+                else:
+                    transaction_summary = "No transaction data available."
+                
+                combined_prompt = f"{system_instruction}\n\n{transaction_summary}\n\nUser Question: {user_message}"
+                
+                response = model.generate_content(combined_prompt)
+                reply_text = response.text.strip()
+                
+                return jsonify({'reply': reply_text}), 200
+            except Exception as e:
+                logging.exception("Error in general Q&A intent")
+                return jsonify({'reply': "I'm having trouble processing your question right now. Please try again or rephrase your question."}), 200
     
-    # Intent 4: Check Goal Progress
-    elif any(k in user_message_lower for k in ["check goal", "how am i doing"]):
-        # ... Bu hissəni dəyişməyə ehtiyac yoxdur, köhnə kodunuzda düzgün işləyirdi ...
-        # Mən qısa saxlamaq üçün bu hissəni tam yazmıram, sizdəki kod olduğu kimi qalmalıdır.
-        # Əgər səhvən silmisinizsə, mənə deyin, tam versiyanı verim.
-        pass 
-
-    # Intent 5: General Q&A
-    else:
-        try:
-            system_instruction = "You are a helpful financial co-pilot..." # (qısa saxladım)
-            prompt = f"{system_instruction}\n\nTransaction Data:\n{json.dumps(transactions_data)}\n\nUser's Question:\n{user_message}"
-            response = model.generate_content(prompt)
-            return jsonify({'reply': response.text}), 200
-        except Exception as e:
-            logging.exception("Error in general Q&A")
-            return jsonify({'reply': 'Sorry, I encountered an error.'}), 500
+    except Exception as e:
+        logging.exception("Unexpected error in chat_endpoint")
+        return jsonify({'error': 'An unexpected error occurred. Please try again.'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=False)
